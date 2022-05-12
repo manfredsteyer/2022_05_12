@@ -7,6 +7,7 @@ import * as fs from 'fs';
 import * as fsExtra from 'fs-extra';
 import * as path from 'path';
 
+// S3
 class CustomRemoteCache implements RemoteCache {
 
     constructor(private remoteDirectory: string) {
@@ -59,7 +60,9 @@ export const customTasksRunner: TasksRunner<CustomTasksRunnerOptions> = (tasks: 
     nxJson: NxJsonConfiguration;
 }) => {
     console.debug('executing customTaskRunner');
+    
     options.remoteCache = new CustomRemoteCache(options.remoteDirectory);
+
     return defaultTasksRunner(tasks, options, context);
 }
 

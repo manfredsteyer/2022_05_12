@@ -3,6 +3,11 @@
 import {Component, OnInit} from '@angular/core';
 
 import {FlightService} from '@flight-workspace/flight-lib';
+import { Store } from '@ngrx/store';
+import { take } from 'rxjs';
+import { flightsLoaded, loadFlights, updateFlight } from '../+state/flight-booking.actions';
+import { FlightBookingAppState, flightBookingFeatureKey } from '../+state/flight-booking.reducer';
+import { selectFlights, selectFlightsWithLambda, selectFlightsWithout } from '../+state/flight-booking.selectors';
 
 @Component({
   selector: 'flight-search',
@@ -15,18 +20,16 @@ export class FlightSearchComponent implements OnInit {
   to = 'Graz'; // in Austria
   urgent = false;
 
-  get flights() {
-    return this.flightService.flights;
-  }
-
   // "shopping basket" with selected flights
   basket: { [id: number]: boolean } = {
     3: true,
     5: true
   };
 
+  flights$ = this.store.select(selectFlightsWithout([4]));
+
   constructor(
-    private flightService: FlightService) {
+    private store: Store<FlightBookingAppState>) {
   }
 
   ngOnInit() {
@@ -34,13 +37,19 @@ export class FlightSearchComponent implements OnInit {
 
   search(): void {
     if (!this.from || !this.to) return;
-
-    this.flightService
-      .load(this.from, this.to, this.urgent);
+    this.store.dispatch(loadFlights({from: this.from, to: this.to, urgent: this.urgent}));
   }
 
+  // delay 1st flight
   delay(): void {
-    this.flightService.delay();
+
+    this.flights$.pipe(take(1)).subscribe(flights => {
+      const flight = flights[0];
+      const newFlight = {...flight, date: new Date().toISOString()}
+      this.store.dispatch(updateFlight({flight: newFlight}))
+    });
+
+    // this.flightService.delay();
   }
 
 }
